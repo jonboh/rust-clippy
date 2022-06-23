@@ -332,6 +332,7 @@ mod unnamed_address;
 mod unnecessary_box_returns;
 mod unnecessary_map_on_constructor;
 mod unnecessary_owned_empty_strings;
+mod unnecessary_reserve;
 mod unnecessary_self_imports;
 mod unnecessary_struct_initialization;
 mod unnecessary_wraps;
@@ -994,6 +995,7 @@ pub fn register_plugins(store: &mut rustc_lint::LintStore, sess: &Session, conf:
     store.register_late_pass(|_| Box::new(tests_outside_test_module::TestsOutsideTestModule));
     store.register_late_pass(|_| Box::new(manual_slice_size_calculation::ManualSliceSizeCalculation));
     store.register_early_pass(|| Box::new(suspicious_doc_comments::SuspiciousDocComments));
+<<<<<<< HEAD
     let excessive_nesting_threshold = conf.excessive_nesting_threshold;
     store.register_early_pass(move || {
         Box::new(excessive_nesting::ExcessiveNesting {
@@ -1066,6 +1068,7 @@ pub fn register_plugins(store: &mut rustc_lint::LintStore, sess: &Session, conf:
     });
     store.register_late_pass(move |_| Box::new(manual_hash_one::ManualHashOne::new(msrv())));
     store.register_late_pass(|_| Box::new(iter_without_into_iter::IterWithoutIntoIter));
+    store.register_late_pass(move || Box::new(unnecessary_reserve::UnnecessaryReserve::new(msrv)));
     // add lints here, do not remove this comment, it's used in `new_lint`
 }
 

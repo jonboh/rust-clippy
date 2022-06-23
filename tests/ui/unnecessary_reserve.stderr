@@ -1,0 +1,52 @@
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:20:5
+   |
+LL |     vec.reserve(1);
+   |     -------------- help: remove this line
+LL |     vec.extend([1]);
+   |     ^^^^^^^^^^^^^^^^
+   |
+   = note: `-D clippy::unnecessary-reserve` implied by `-D warnings`
+
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:24:5
+   |
+LL |     vec.reserve(array.len());
+   |     ------------------------ help: remove this line
+LL |     vec.extend(array);
+   |     ^^^^^^^^^^^^^^^^^^
+
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:29:9
+   |
+LL |         vec.reserve(1);
+   |         -------------- help: remove this line
+LL |         vec.extend([1])
+   |         ^^^^^^^^^^^^^^^
+
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:49:5
+   |
+LL |     vec_deque.reserve(1);
+   |     -------------------- help: remove this line
+LL |     vec_deque.extend([1]);
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:53:5
+   |
+LL |     vec_deque.reserve(array.len());
+   |     ------------------------------ help: remove this line
+LL |     vec_deque.extend(array);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unnecessary call to `reserve`
+  --> $DIR/unnecessary_reserve.rs:58:9
+   |
+LL |         vec_deque.reserve(1);
+   |         -------------------- help: remove this line
+LL |         vec_deque.extend([1])
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 6 previous errors
+
