@@ -15,6 +15,7 @@ LL | | }
    | |_^
    |
    = note: `-D clippy::unnecessary-reserve` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::unnecessary_reserve)]`
 
 error: unnecessary call to `reserve`
   --> $DIR/unnecessary_reserve.rs:27:5

@@ -995,8 +995,6 @@ pub fn register_plugins(store: &mut rustc_lint::LintStore, sess: &Session, conf:
     store.register_late_pass(|_| Box::new(tests_outside_test_module::TestsOutsideTestModule));
     store.register_late_pass(|_| Box::new(manual_slice_size_calculation::ManualSliceSizeCalculation));
     store.register_early_pass(|| Box::new(suspicious_doc_comments::SuspiciousDocComments));
-<<<<<<< HEAD
-<<<<<<< HEAD
     let excessive_nesting_threshold = conf.excessive_nesting_threshold;
     store.register_early_pass(move || {
         Box::new(excessive_nesting::ExcessiveNesting {

@@ -20,17 +20,17 @@ fn vec_reserve() {
     vec.extend([1]);
 
     //// do lint
-    vec.reserve(array.len());
+    ;
     vec.extend(array);
 
     // do lint
     {
-        vec.reserve(array.len());
+        ;
         vec.extend(array)
     };
 
     // do not lint
-    vec.reserve(array.len());
+    ;
     vec.push(1);
     vec.extend(array);
 
@@ -49,7 +49,7 @@ fn vec_deque_reserve() {
     vec_deque.extend([1]);
 
     // do lint
-    vec_deque.reserve(array.len());
+    ;
     vec_deque.extend(array);
 
     // do not lint

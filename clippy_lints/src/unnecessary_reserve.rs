@@ -1,6 +1,7 @@
+use clippy_config::msrvs::{self, Msrv};
 use clippy_utils::diagnostics::span_lint_and_then;
-use clippy_utils::msrvs::{self, Msrv};
-use clippy_utils::{get_enclosing_block, match_def_path, paths, visitors::for_each_expr, SpanlessEq};
+use clippy_utils::visitors::for_each_expr;
+use clippy_utils::{get_enclosing_block, match_def_path, paths, SpanlessEq};
 use core::ops::ControlFlow;
 use rustc_errors::Applicability;
 use rustc_hir::{Block, Expr, ExprKind, PathSegment};
@@ -53,27 +54,28 @@ impl<'tcx> LateLintPass<'tcx> for UnnecessaryReserve {
         }
 
         if let ExprKind::MethodCall(PathSegment { ident: method, .. }, struct_calling_on, args_a, _) = expr.kind
-                && method.name.as_str() == "reserve"
-                && acceptable_type(cx, struct_calling_on)
-                && let Some(block) = get_enclosing_block(cx, expr.hir_id)
-                && let Some(next_stmt_span) = check_extend_method(cx, block, struct_calling_on, &args_a[0])
-                && !next_stmt_span.from_expansion()
-            {
-                span_lint_and_then(
-                    cx,
-                    UNNECESSARY_RESERVE,
-                    next_stmt_span,
-                    "unnecessary call to `reserve`",
-                    |diag| {
-                        diag.span_suggestion(
-                            expr.span,
-                            "remove this line",
-                            String::new(),
-                            Applicability::MaybeIncorrect,
-                        );
-                    }
-                );
-            }
+            && method.name.as_str() == "reserve"
+            && acceptable_type(cx, struct_calling_on)
+            && let Some(block) = get_enclosing_block(cx, expr.hir_id)
+            && let Some(next_stmt_span) = check_extend_method(cx, block, struct_calling_on, &args_a[0])
+            && !next_stmt_span.from_expansion()
+        {
+            span_lint_and_then(
+                cx,
+                UNNECESSARY_RESERVE,
+                next_stmt_span,
+                "unnecessary call to `reserve`",
+                |diag| {
+                    diag.span_suggestion(
+                        expr.span,
+                        "remove this line",
+                        String::new(),
+                        Applicability::MaybeIncorrect,
+                    );
+                },
+            );
+            // NOTE: fix keeps ; at the end of stmt, this should be removed as well
+        }
     }
 
     extract_msrv_attr!(LateContext);
@@ -82,6 +84,7 @@ impl<'tcx> LateLintPass<'tcx> for UnnecessaryReserve {
 #[must_use]
 fn acceptable_type(cx: &LateContext<'_>, struct_calling_on: &rustc_hir::Expr<'_>) -> bool {
     let acceptable_types = [sym::Vec, sym::VecDeque];
+    // NOTE: might be here a more succint way?
     acceptable_types.iter().any(|&acceptable_ty| {
         match cx.typeck_results().expr_ty(struct_calling_on).peel_refs().kind() {
             ty::Adt(def, _) => cx.tcx.is_diagnostic_item(acceptable_ty, def.did()),
@@ -106,7 +109,7 @@ fn check_extend_method(
             && let Some(expr_def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id)
             && let ExprKind::MethodCall(PathSegment { ident: method_call_a, .. },..) = args_a_kind
             && method_call_a.name == rustc_span::sym::len
-            && match_def_path(cx, expr_def_id, &paths::ITER_EXTEND)
+            && match_def_path(cx, expr_def_id, &paths::ITER_EXTEND) // TODO: use path or diagnostic
             && acceptable_type(cx, struct_calling_on)
             // Check that both expr are equal
             && spanless_eq.eq_expr(struct_calling_on, struct_expr)
