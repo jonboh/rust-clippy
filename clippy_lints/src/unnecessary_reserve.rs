@@ -56,14 +56,23 @@ impl<'tcx> LateLintPass<'tcx> for UnnecessaryReserve {
         if let ExprKind::MethodCall(PathSegment { ident: method, .. }, struct_calling_on, args_a, _) = expr.kind
             && method.name.as_str() == "reserve"
             && acceptable_type(cx, struct_calling_on)
+            && let Some(arg) = args_a.get(0)
+            && let ExprKind::MethodCall(
+                PathSegment {
+                    ident: method_call_a, ..
+                },
+                struct_calling_len,
+                ..,
+            ) = arg.kind
+            && method_call_a.name == rustc_span::sym::len
             && let Some(block) = get_enclosing_block(cx, expr.hir_id)
-            && let Some(next_stmt_span) = check_extend_method(cx, block, struct_calling_on, &args_a[0])
-            && !next_stmt_span.from_expansion()
+            && let Some(extend_stmt_span) = check_extend_method(cx, block, struct_calling_on, struct_calling_len)
+            && !extend_stmt_span.from_expansion()
         {
             span_lint_and_then(
                 cx,
                 UNNECESSARY_RESERVE,
-                next_stmt_span,
+                extend_stmt_span,
                 "unnecessary call to `reserve`",
                 |diag| {
                     diag.span_suggestion(
@@ -98,25 +107,24 @@ fn check_extend_method(
     cx: &LateContext<'_>,
     block: &Block<'_>,
     struct_expr: &rustc_hir::Expr<'_>,
-    args_a: &rustc_hir::Expr<'_>,
+    extend_arg: &Expr<'_>,
 ) -> Option<rustc_span::Span> {
-    let args_a_kind = &args_a.kind;
     let mut read_found = false;
-    let mut spanless_eq = SpanlessEq::new(cx);
+    let mut self_found = false;
 
-    let _: Option<!> = for_each_expr(block, |expr| {
-        if let ExprKind::MethodCall(_, struct_calling_on, _,_) = expr.kind
-            && let Some(expr_def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id)
-            && let ExprKind::MethodCall(PathSegment { ident: method_call_a, .. },..) = args_a_kind
-            && method_call_a.name == rustc_span::sym::len
-            && match_def_path(cx, expr_def_id, &paths::ITER_EXTEND) // TODO: use path or diagnostic
+    for_each_expr(block, |expr| {
+        println!("{:?}", expr.span);
+        if let Some(expr_def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id)
+            && match_def_path(cx, expr_def_id, &paths::ITER_EXTEND)
+            && let ExprKind::MethodCall(_, struct_calling_on, args, _) = expr.kind
             && acceptable_type(cx, struct_calling_on)
-            // Check that both expr are equal
-            && spanless_eq.eq_expr(struct_calling_on, struct_expr)
+            && SpanlessEq::new(cx).eq_expr(struct_calling_on, struct_expr)
+            && let Some(arg) = args.first()
+            && SpanlessEq::new(cx).eq_expr(extend_arg, arg)
         {
             read_found = true;
+            return ControlFlow::Break(());
         }
-        let _: bool = !read_found;
         ControlFlow::Continue(())
     });
 
